@@ -25,3 +25,14 @@ minulý čas	préteritum
 přítomný čas	prézentum
 budoucí čas	futurum
 předminulý čas	plusquamperfekt
+podmět	subjekt
+předmět	objekt
+přísudek	predikát
+přívlastek	atribut
+příčestí	participium
+doplněk	komplement (atribut verbální)
+jmenný rod	gender (en)
+čas	tense (en)
+slovesný rod	voice (en)
+činný rod	active voice (en)
+trpný rod	passive voice (en)
