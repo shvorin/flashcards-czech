@@ -1,62 +1,66 @@
 #!/usr/bin/awk -f
+# FIXME: vanilla awk may not have rand(); nawk, gawk, etc to be used instead
 
 BEGIN {
     srand()
     # for historical reason the separator is comma
     FS = ", "
-    forms[1] = "infinitiv"
-    forms[2] = "3.os.jed.č."
-    forms[3] = "rozkaz"
-    forms[4] = "minulý čas"
-    xxx = 0
+    form_names[1] = "infinitiv"
+    form_names[2] = "3.os.jed.č."
+    form_names[3] = "rozkaz"
+    form_names[4] = "minulý"
 }
 {
-    if (NF != 4)
+    if(NF != 4)
         next
 
-    src_idx = get_src_idx()
-    n = split($src_idx, array, " / ")
-    if (n == 1)
-        src = $src_idx
-    else
-        # take any
-        src = array[rand_n(n)]
+    nForms = 0
+    for(i = 1; i <= 4; ++i) {
+        if($i == "_")
+            continue
+        ++nForms
+        form_indices[nForms] = i
+    }
 
-    for(dst_idx = 1; dst_idx <= 4; ++dst_idx) {
-        if(dst_idx == src_idx)
-            continue
-        if($dst_idx == "_")
-            continue
-        left = src " | " forms[dst_idx] " >"
-        n = split($dst_idx, array, " / ")
-        if (n == 1)
+    if(nForms <= 1) {
+        delete form_indices
+        next
+    }
+
+    for(j in form_indices) {
+        dst_idx = form_indices[j]
+        i = rand_n(nForms - 1)
+        if(i >= j)
+            ++i
+        src_idx = form_indices[i]
+        # NB: here src_idx is randomly picked not equal to dst_idx
+
+        nVars = split($src_idx, array, " / ")
+        if(nVars == 1)
+            src = $src_idx
+        else
+            # take any
+            src = array[rand_n(nVars)]
+
+        left = src " |" form_names[dst_idx] ">"
+        nVars = split($dst_idx, array, " / ")
+        if(nVars == 1)
             right = $dst_idx
         else {
-            left = left " (" n " variants)"
-            # NB: Quizlet uses comma for unsorted variants
-            right = join(", ", n, array)
+            left = left " (" nVars " variants)"
+            # NB: Quizlet uses comma for unsorted form_indices
+            right = join(", ", nVars, array)
         }
         printf("%s\t%s\n", left, right)
     }
-}
 
-function get_src_idx() {
-    i = rand_n(4)
-    i0 = i
-    while($i == "_") {
-        i = i + 1
-        if (i == i0)
-            next
-        if (i > 4)
-            i = 1
-    }
-    return i
+    delete form_indices
 }
 
 # picks a random integer from {1, ..., n}
 function rand_n(n) {
     res = int(rand() * n) + 1
-    if (res < 1 || res > n)
+    if(res < 1 || res > n)
         # WTF?
         res = 1
 
