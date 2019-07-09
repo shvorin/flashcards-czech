@@ -36,7 +36,7 @@ BEGIN {
 }
 
 function get_src_idx() {
-    i = rand_n(n)
+    i = rand_n(4)
     i0 = i
     while($i == "_") {
         i = i + 1
