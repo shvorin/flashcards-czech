@@ -1,9 +1,14 @@
 #!/usr/bin/awk -f
 
 BEGIN {
-# for historical reason the separator is comma
-    FS = ", "
     srand()
+    # for historical reason the separator is comma
+    FS = ", "
+    forms[1] = "infinitiv"
+    forms[2] = "3.os.jed.č."
+    forms[3] = "rozkaz"
+    forms[4] = "minulý čas"
+    xxx = 0
 }
 {
     if (NF != 4)
@@ -22,7 +27,7 @@ BEGIN {
             continue
         if($dst_idx == "_")
             continue
-        left = "put <" src "> into " dst_idx
+        left = src " | " forms[dst_idx] " >"
         n = split($dst_idx, array, " / ")
         if (n == 1)
             right = $dst_idx
