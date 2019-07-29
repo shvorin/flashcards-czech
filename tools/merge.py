@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 import sys
 
-def target_case(i):
-    if i <= 3:
-        return "%d. pád" % (i+1)
-    if i <= 5:
-        return "%d. pád" % (i+2)
-    return ""
+case_questions = [
+    "kdo, co",
+    "koho, čeho",
+    "komu, čemu",
+    "koho, co",
+    "o kom, o čem",
+    "s kým, čím"]
 
 files = map(open, sys.argv[1:])
 
@@ -23,11 +24,15 @@ while True:
     if not s:
         break
 
-    xx = ' '.join(s)
+    expr = ' '.join(s)
     if i == 0:
-        nominative = xx
+        nominative = expr
     else:
-        print "%s |%s>\t%s" % (nominative, target_case(i), xx)
+        try:
+            qcase = case_questions[i]
+        except IndexError:
+            break
+        print "%s |%s>\t%s" % (nominative, qcase, expr)
     i += 1
 
 for f in files:
