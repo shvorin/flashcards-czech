@@ -72,24 +72,46 @@ def adjective(hard, gender, number):
         column = h()
     return fname, column
 
-case_questions = [
-    "kdo, co",
-    "koho, čeho",
-    "komu, čemu",
-    "koho, co",
-    "o kom, o čem",
-    "s kým, čím"]
+# case_questions = [
+#     "kdo, co",
+#     "koho, čeho",
+#     "komu, čemu",
+#     "koho, co",
+#     "o kom, o čem",
+#     "s kým, čím"]
+
+def mk_case_dict(*lst):
+    if len(lst) == 1:
+        lst = string.split(lst[0], ' ')
+    res = {}
+    for idx in range(len(lst)):
+        x = lst[idx]
+        if not x is None:
+            res[GrammarCase(idx + 1)] = x
+    return res
 
 # NB: avoid mutable prepositions (like s/se, k/ke, v/ve)
-case_prefix = {
-    GrammarCase.nominative: "to je/jsou",
-    GrammarCase.genitive: "bez",
-    GrammarCase.dative: "díky",
-    GrammarCase.accusative: "vidím",
-    # skip GrammarCase.vocative
-    GrammarCase.locative: "o",
-    GrammarCase.instrumental: "před"
-    }
+case_prefix = mk_case_dict("to je/jsou", "bez", "díky", "vidím", "ahoj,", "o", "před")
+
+noun1_jed = mk_case_dict("bratr bratra bratru bratra bratře bratru bratrem")
+noun1_mn = mk_case_dict("bratři bratrů bratrům bratry bratři bratrech bratřími")
+noun2_jed = mk_case_dict("strom stromu stromu strom strome stromě stromem")
+noun2_mn = mk_case_dict("stromy stromů stromům stromy stromy stromech stromy")
+noun3_jed = mk_case_dict("bříza břízy bříze břízu břízo bříze břízou")
+noun3_mn = mk_case_dict("břízy bříz břízám břízy břízy břízách břízami")
+noun4_jed = mk_case_dict("slunce slunce slunci slunce slunce slunci sluncem")
+noun4_mn = mk_case_dict("slunce sluncí sluncím slunce slunce sluncích slunci")
+
+case_postfix = {
+    (GrammarGender.masculine_animate, GrammarNumber.singular): noun1_jed,
+    (GrammarGender.masculine_animate, GrammarNumber.plural): noun1_mn,
+    (GrammarGender.masculine_inanimate, GrammarNumber.singular): noun2_jed,
+    (GrammarGender.masculine_inanimate, GrammarNumber.plural): noun2_mn,
+    (GrammarGender.feminine, GrammarNumber.singular): noun3_jed,
+    (GrammarGender.feminine, GrammarNumber.plural): noun3_mn,
+    (GrammarGender.neuter, GrammarNumber.singular): noun4_jed,
+    (GrammarGender.neuter, GrammarNumber.plural): noun4_mn,
+}
 
 for gender in GrammarGender.__members__.itervalues():
     for number in GrammarNumber.__members__.itervalues():
@@ -98,12 +120,13 @@ for gender in GrammarGender.__members__.itervalues():
                          adjective(False, gender, number))
         try:
             files_columns = [(open(fname), col) for fname, col in fname_columns]
+            forms = {}
 
             for i in GrammarCase.__members__.itervalues():
                 if i is GrammarCase.vocative:
+                    # the database files have vocative skipped
                     continue
-                s = []
-                multivar = False
+                forms[i] = []
                 for f, col in files_columns:
                     line = f.readline()
                     if not line:
@@ -111,31 +134,33 @@ for gender in GrammarGender.__members__.itervalues():
                     line = line[:-1] # drop '/n'
                     form = string.split(line, '\t')[col - 1]
                     form_vars = string.split(form, ', ')
-                    s.append(form_vars)
-                    if len(form_vars) > 1:
-                        multivar = True
+                    forms[i].append(form_vars)
 
-                if not s:
-                    break
-
+            # TODO: use a random form for the pattern
+            s_pat = forms[GrammarCase.nominative]
+            for i, s in forms.iteritems():
                 if i is GrammarCase.nominative:
-                    # take only one variant for the lefthand side
-                    nominative = ' '.join(["[" + el[0] + "]" for el in s])
-                else:
-                    # try:
-                    #     qcase = case_questions[i]
-                    # except IndexError:
-                    #     break
-                    try:
-                        pre = case_prefix.get(i, "")
-                    except Exception, e:
-                        print e
-                    lefthand = "%s %s" % (pre, nominative)
-                    if multivar:
-                        lefthand += " (několik variant)"
-                    # generate all variants for the righthand side
-                    righthand = ', '.join([' '.join(x) for x in itertools.product(*s)])
-                    print "%s\t%s" % (lefthand, righthand)
+                    continue
+
+                # use only one variant for the lefthand side
+                nominative_pattern = []
+                assert len(s_pat) == len(s)
+                for idx in range(len(s_pat)):
+                    l = len(s[idx])
+                    elem = "[%s (x%d)]" % (s_pat[idx][0], l) if l > 1 else "[%s]" % s_pat[idx][0]
+                    nominative_pattern.append(elem)
+
+                try:
+                    prefix = case_prefix[i]
+                    postfix = case_postfix[(gender, number)][i]
+                except KeyError:
+                    continue
+
+                lefthand = "%s %s %s" % (prefix, ' '.join(nominative_pattern), postfix)
+
+                # generate all variants for the righthand side
+                righthand = ' / '.join([' '.join(x) for x in itertools.product(*s)])
+                print "%s\t%s" % (lefthand, righthand)
 
             for f, _ in files_columns:
                 f.close()
