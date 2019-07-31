@@ -41,6 +41,16 @@ def adjective(hard, gender, number):
             return "jed"
         if number is GrammarNumber.plural:
             return "mn"
+    def h():
+        if gender is GrammarGender.masculine_animate:
+            return 1
+        if gender is GrammarGender.masculine_inanimate:
+            return 2
+        if gender is GrammarGender.feminine:
+            return 3
+        if gender is GrammarGender.neuter:
+            return 4
+
     part1 = f()
     part2 = g()
     if part1 is None or part2 is None:
@@ -49,14 +59,17 @@ def adjective(hard, gender, number):
         adj = "mladý"
     else:
         adj = "jarní"
-    if not hard and number is GrammarNumber.plural:
+    if number is GrammarNumber.plural:
         # ignore gender
         fname = '-'.join([adj, part2])
     else:
         fname = '-'.join([adj, part2, part1])
 
     fname = os.path.join(dirname, "..", "adj", fname)
-    column = 1
+    if not hard or number is GrammarNumber.singular:
+        column = 1
+    else:
+        column = h()
     return fname, column
 
 case_questions = [
