@@ -80,6 +80,17 @@ case_questions = [
     "o kom, o čem",
     "s kým, čím"]
 
+# NB: avoid mutable prepositions (like s/se, k/ke, v/ve)
+case_prefix = {
+    GrammarCase.nominative: "to je/jsou",
+    GrammarCase.genitive: "bez",
+    GrammarCase.dative: "díky",
+    GrammarCase.accusative: "vidím",
+    # skip GrammarCase.vocative
+    GrammarCase.locative: "o",
+    GrammarCase.instrumental: "před"
+    }
+
 for gender in GrammarGender.__members__.itervalues():
     for number in GrammarNumber.__members__.itervalues():
         fname_columns = (possessive_pronoun(gender, number),
@@ -88,8 +99,9 @@ for gender in GrammarGender.__members__.itervalues():
         try:
             files_columns = [(open(fname), col) for fname, col in fname_columns]
 
-            i = 0
-            while True:
+            for i in GrammarCase.__members__.itervalues():
+                if i is GrammarCase.vocative:
+                    continue
                 s = []
                 multivar = False
                 for f, col in files_columns:
@@ -106,21 +118,24 @@ for gender in GrammarGender.__members__.itervalues():
                 if not s:
                     break
 
-                if i == 0:
+                if i is GrammarCase.nominative:
                     # take only one variant for the lefthand side
-                    nominative = ' '.join([el[0] for el in s])
+                    nominative = ' '.join(["[" + el[0] + "]" for el in s])
                 else:
+                    # try:
+                    #     qcase = case_questions[i]
+                    # except IndexError:
+                    #     break
                     try:
-                        qcase = case_questions[i]
-                    except IndexError:
-                        break
-                    lefthand = "%s |%s>" % (nominative, qcase)
+                        pre = case_prefix.get(i, "")
+                    except Exception, e:
+                        print e
+                    lefthand = "%s %s" % (pre, nominative)
                     if multivar:
                         lefthand += " (několik variant)"
                     # generate all variants for the righthand side
                     righthand = ', '.join([' '.join(x) for x in itertools.product(*s)])
                     print "%s\t%s" % (lefthand, righthand)
-                i += 1
 
             for f, _ in files_columns:
                 f.close()
