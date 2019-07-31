@@ -78,26 +78,35 @@ for gender in GrammarGender.__members__.itervalues():
             i = 0
             while True:
                 s = []
+                multivar = False
                 for f, col in files_columns:
                     line = f.readline()
                     if not line:
                         break
                     line = line[:-1] # drop '/n'
-                    var = string.split(line, '\t')[col - 1]
-                    xxx = string.split(var, ', ')
-                    s.append(xxx)
+                    form = string.split(line, '\t')[col - 1]
+                    form_vars = string.split(form, ', ')
+                    s.append(form_vars)
+                    if len(form_vars) > 1:
+                        multivar = True
+
                 if not s:
                     break
 
                 if i == 0:
-                    nominative = ' '.join([', '.join(el) for el in s])
+                    # take only one variant for the lefthand side
+                    nominative = ' '.join([el[0] for el in s])
                 else:
                     try:
                         qcase = case_questions[i]
                     except IndexError:
                         break
-                    expr = ', '.join([' '.join(x) for x in itertools.product(*s)])
-                    print "%s |%s>\t%s" % (nominative, qcase, expr)
+                    lefthand = "%s |%s>" % (nominative, qcase)
+                    if multivar:
+                        lefthand += " (několik variant)"
+                    # generate all variants for the righthand side
+                    righthand = ', '.join([' '.join(x) for x in itertools.product(*s)])
+                    print "%s\t%s" % (lefthand, righthand)
                 i += 1
 
             for f, _ in files_columns:
