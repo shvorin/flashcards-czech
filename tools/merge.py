@@ -86,6 +86,27 @@ This format is also suitable for possessive pronouns.
     def get(self, case, number, gender):
         return self.adjective_table[(case, number, gender)]
 
+def checkKey(case, number, gender):
+    if type(case) != GrammarCase or type(number) != GrammarNumber or type(gender) != GrammarGender:
+        raise KeyError
+    if not number in (GrammarNumber.singular, GrammarNumber.plural):
+        raise KeyError
+
+# isGreen means that ru-cz isomorphism exists; refer to the spreadsheet
+def isGreen_hard_adjective(case, number, gender):
+    checkKey(case, number, gender)
+    if gender is GrammarGender.feminine and number is GrammarNumber.singular:
+        return False
+    if case in (GrammarCase.nominative, GrammarCase.accusative, GrammarCase.vocative):
+        if number is GrammarNumber.plural or gender is GrammarGender.neuter:
+            return False
+    return True
+
+def isGreen_soft_adjective(case, number, gender):
+    checkKey(case, number, gender)
+    # don't bother with it
+    return False
+
 def mk_case_dict(*lst):
     if len(lst) == 1:
         lst = string.split(lst[0], ' ')
@@ -129,9 +150,12 @@ if __name__ == '__main__':
                              GrammarGender.feminine: 'bříza',
                              GrammarGender.neuter: 'slunce',
                          })
-    lexemes = (read_forms(Adjective_FTable, 'pronouns', 'svůj', split_variants),
-               read_forms(Adjective_FTable, 'adjectives', 'mladý', split_variants),
-               read_forms(Adjective_FTable, 'adjectives', 'jarní', split_variants))
+    # tags
+    tPossessive, tHard, tSoft = 1, 2, 3
+    lexemes = {tPossessive: read_forms(Adjective_FTable, 'pronouns', 'svůj', split_variants),
+               tHard:       read_forms(Adjective_FTable, 'adjectives', 'mladý', split_variants),
+               tSoft:       read_forms(Adjective_FTable, 'adjectives', 'jarní', split_variants)
+    }
 
     for number in GrammarNumber.__members__.itervalues():
         for gender in GrammarGender.__members__.itervalues():
@@ -147,14 +171,32 @@ if __name__ == '__main__':
 
                 nominative_pattern = []
                 current_forms = []
-                for lexeme in lexemes:
-                    # use only one variant for the lefthand side
-                    nominative = lexeme.get(GrammarCase.nominative, number, gender)[0]
-                    current = lexeme.get(case, number, gender)
+                for tag, lexeme in lexemes.iteritems():
+                    if tag is tHard and isGreen_hard_adjective(case, number, gender):
+                        continue
+                    if tag is tSoft and isGreen_soft_adjective(case, number, gender):
+                        continue
+                    try:
+                        # use only one variant for the lefthand side
+                        nominative = lexeme.get(GrammarCase.nominative, number, gender)[0]
+                        current = lexeme.get(case, number, gender)
+                    except KeyError:
+                        continue
                     n_vars = len(current)
+                    if tag is tPossessive:
+                        # Here we rely on "svůj" database file format: the
+                        # _last_ variant is trivial (i.e. the same as in hard
+                        # adjetives) and, thus, is to be dropped
+                        current = current[:-1]
+                        n_vars -= 1
+                    if n_vars < 1:
+                        continue
                     nominative_pattern.append("[%s (x%d)]" % (nominative, n_vars) if n_vars > 1
                                               else "[%s]" % nominative)
                     current_forms.append(current)
+
+                if not nominative_pattern or not current_forms:
+                    continue
 
                 lefthand = "%s %s %s" % (prefix, ' '.join(nominative_pattern), postfix)
                 righthand = ' / '.join([' '.join(x) for x in itertools.product(*current_forms)])
