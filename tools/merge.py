@@ -148,7 +148,7 @@ if __name__ == '__main__':
                              GrammarGender.masculine_animate: 'bratr',
                              GrammarGender.masculine_inanimate: 'strom',
                              GrammarGender.feminine: 'bříza',
-                             GrammarGender.neuter: 'slunce',
+                             GrammarGender.neuter: 'město',
                          })
     # tags
     tPossessive, tHard, tSoft = 1, 2, 3
