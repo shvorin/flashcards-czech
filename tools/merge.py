@@ -72,7 +72,7 @@ This format is also suitable for possessive pronouns.
         super(Adjective_FTable, self).__init__(fname, convert)
         t = {}
         for case in GrammarCase.__members__.itervalues():
-            for number_idx, number in enumerate(Adjective_FTable.number_list):
+            for number_idx, number in enumerate(self.number_list):
                 for gender_idx, gender in enumerate(GrammarGender.__members__.values()):
                     # NB: column zero stands for case names, so must be skipped
                     col = number_idx * len(GrammarGender) + gender_idx + 1
