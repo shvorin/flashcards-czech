@@ -53,12 +53,13 @@ if __name__ == '__main__':
     for number in GrammarNumber.__members__.itervalues():
         for case in GrammarCase.__members__.itervalues():
             try:
-                righthand = ' / '.join(noun.get(case, number))
+                current = noun.get(case, number)
+                n_vars = len(current)
+                righthand = ' / '.join(current)
                 prefix = aux_prefix[case]
                 possessive = aux_possessive.get(case, number, gender)
-                rand_case = GrammarCase(pick_rand_case(case.value))
-                print '%s %s [%s]\t%s' % (prefix, possessive,
-                                          noun.get(rand_case, number)[0],
-                                          righthand)
+                pattern_form = noun.get(GrammarCase(pick_rand_case(case.value)), number)[0]
+                pattern = "[%s (x%d)]" % (pattern_form, n_vars) if n_vars > 1 else "[%s]" % pattern_form
+                print '%s %s %s\t%s' % (prefix, possessive, pattern, righthand)
             except KeyError:
                 continue
