@@ -39,12 +39,39 @@ def mk_aux_prefix():
     res[(GrammarCase.nominative, GrammarNumber.plural)] = "to jsou"
     return res
 
+def get_gender(fnoun):
+    if fnoun in ['pán', 'muž', 'předseda', 'soudce']:
+        return GrammarGender.masculine_animate
+    if fnoun in ['hrad', 'stroj']:
+        return GrammarGender.masculine_inanimate
+    if fnoun in ['žena', 'růže', 'píseň', 'kost']:
+        return GrammarGender.feminine
+    if fnoun in ['město', 'moře', 'kuře', 'stavení']:
+        return GrammarGender.neuter
+    return None
+
+def usage():
+    print ('usage: %s noun' % sys.argv[0])
+
 if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        usage()
+        exit(1)
+    try:
+        fnoun = sys.argv[1]
+        noun = read_forms(Noun_FTable, 'nouns', fnoun, split_variants)
+    except IOError, e:
+        print e
+        exit(1)
+
+    # FIXME: an ugly solution, it should be in database
+    gender = get_gender(fnoun)
+    if gender is None:
+        print ("gender of '%s' is unknown" % fnoun)
+
     # NB: avoid mutable prepositions (like s/se, k/ke, v/ve)
     aux_prefix = mk_aux_prefix()
     aux_possessive = read_forms(Adjective_FTable, 'adjectives', 'mladý', uniq_variant)
-    noun = read_forms(Noun_FTable, 'nouns', 'pán', split_variants)
-    gender = GrammarGender.masculine_animate
 
     for number in GrammarNumber.__members__.itervalues():
         for case in GrammarCase.__members__.itervalues():
