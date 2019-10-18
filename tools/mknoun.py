@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     # NB: avoid mutable prepositions (like s/se, k/ke, v/ve)
     aux_prefix = mk_aux_prefix()
-    aux_possessive = read_forms(Adjective_FTable, 'adjectives', 'mladý', uniq_variant)
+    aux_possessive = read_forms(Adjective_FTable, 'pronouns', 'svůj', uniq_variant)
 
     for number in GrammarNumber.__members__.itervalues():
         for case in GrammarCase.__members__.itervalues():
