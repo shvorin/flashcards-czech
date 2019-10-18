@@ -80,11 +80,12 @@ if __name__ == '__main__':
             try:
                 current = noun.get(case, number)
                 n_vars = len(current)
-                righthand = ' / '.join(current)
+                term = ' / '.join(current)
                 prefix = aux_prefix[(case, number)]
                 possessive = aux_possessive.get(case, number, gender)
                 pattern_form = noun.get(GrammarCase.nominative, number)[0]
                 pattern = "[%s (x%d)]" % (pattern_form, n_vars) if n_vars > 1 else "[%s]" % pattern_form
-                print '%s %s %s\t%s' % (prefix, possessive, pattern, righthand)
+                # NB: Quizlet prefers to show the definition (righthand) asking for term (lefthand)
+                print '%s\t%s %s %s' % (term, prefix, possessive, pattern)
             except KeyError:
                 continue
